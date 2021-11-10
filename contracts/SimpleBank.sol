@@ -40,12 +40,12 @@ contract SimpleBank {
     // Typically, called when invalid data is sent
     // Added so ether sent to this contract is reverted if the contract fails otherwise, the sender's money is transferred to contract
     
-    fallback () external payable {
-        revert();
-    }
+    //fallback () external payable {
+        //reverts();
+    //}
     
-    receive () external payable {
-        reverts();
+    function() external payable {
+        revert();
     }
 
     /// @notice Get balance
@@ -61,26 +61,30 @@ contract SimpleBank {
     // Emit the appropriate event
     function enroll() public returns (bool){
       // 1. enroll of the sender of this transaction
-      require(!enrolled[msg.sender], "Already enrolled");
+      // require(!enrolled[msg.sender], "Already enrolled");
       
       enrolled[msg.sender] =  true;
       
       emit LogEnrolled(msg.sender);
       
-      return true;
+      return enrolled[msg.sender];
     }
 
     /// @notice Deposit ether into bank
     /// @return The balance of the user after the deposit is made
     function deposit() public payable returns (uint) {
       // 1. Add the appropriate keyword so that this function can receive ether
-    
+     
       // 2. Users should be enrolled before they can make deposits
-      require(enrolled[msg.sender], "Users should be enrolled before they can make deposits");
-      // 3. Add the amount to the user's balance. Hint: the amount can be accessed from of the global variable `msg`
-      require(msg.value > 0, "Amount 0");
+      require(enrolled[msg.sender], 'Users should be enrolled before they can make deposits');
+
+      // 3. Add the amount to the user's balance. Hint: the amount can be
+      //    accessed from of the global variable `msg`
+      balances[msg.sender] += msg.value;
+
       // 4. Emit the appropriate event associated with this function
       emit LogDepositMade(msg.sender, msg.value);
+
       // 5. return the balance of sndr of this transaction
       return balances[msg.sender];
     }
@@ -92,13 +96,17 @@ contract SimpleBank {
     function withdraw(uint withdrawAmount) public returns (uint) {
       // If the sender's balance is at least the amount they want to withdraw,
       // Subtract the amount from the sender's balance, and try to send that amount of ether to the user attempting to withdraw. 
-      // 1. Use a require expression to guard/ensure sender has enough funds
-      require(withdrawAmount > 0 && balances[msg.sender] >= withdrawAmount, "The amount is out of range");
-      // 2. Transfer Eth to the sender and decrement the withdrawal amount from sender's balance
+     // 1. Use a require expression to guard/ensure sender has enough funds
+      require(balances[msg.sender] >= withdrawAmount, 'Not enough fund to withdraw');
+
+      // 2. Transfer Eth to the sender and decrement the withdrawal amount from
+      //    sender's balance
+      msg.sender.transfer(withdrawAmount);
       balances[msg.sender] -= withdrawAmount;
+
       // 3. Emit the appropriate event for this message
       emit LogWithdrawal(msg.sender, withdrawAmount, balances[msg.sender]);
-      // return the user's balance.
+
       return balances[msg.sender];
     }
 }
